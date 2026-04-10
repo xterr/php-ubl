@@ -3,3 +3,5 @@ parameters:
     paths:
         - src/
     reportUnmatchedIgnoredErrors: false
+    ignoreErrors:
+        - '#Access to an undefined property object::\$#'
