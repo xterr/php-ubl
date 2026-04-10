@@ -1,7 +1,7 @@
 {
   "name": "xterr/php-ubl",
   "description": "UBL 2.x XSD-to-PHP 8.4+",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "license": "MIT",
   "type": "library",
   "keywords": ["ubl", "xml", "xsd", "e-invoicing", "espd", "procurement", "oasis", "peppol"],
