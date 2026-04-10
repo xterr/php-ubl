@@ -1,0 +1,41 @@
+{
+  "name": "xterr/php-ubl",
+  "description": "UBL 2.x XSD-to-PHP 8.4+",
+  "version": "1.0.0",
+  "license": "MIT",
+  "type": "library",
+  "keywords": ["ubl", "xml", "xsd", "e-invoicing", "espd", "procurement", "oasis", "peppol"],
+  "authors": [
+    {
+      "name": "Razvan Ceana",
+      "email": "razvan@ceana.ro"
+    }
+  ],
+  "require": {
+    "php": "^8.1",
+    "ext-dom": "*",
+    "ext-libxml": "*"
+  },
+  "require-dev": {
+    "phpstan/phpstan": "^2.0",
+    "phpunit/phpunit": "^11.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Xterr\\UBL\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Xterr\\UBL\\Tests\\": "tests/"
+    }
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "scripts": {
+    "test": "phpunit",
+    "test:unit": "phpunit --testsuite=unit",
+    "analyze": "phpstan analyze"
+  }
+}
