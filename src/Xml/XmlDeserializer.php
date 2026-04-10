@@ -137,6 +137,14 @@ final class XmlDeserializer
             return $this->convertValue($this->getDirectTextContent($child), $prop);
         }
 
+        if ($prop->isEnum && $prop->enumClass !== null) {
+            $textContent = $this->getDirectTextContent($child);
+            /** @var class-string<\BackedEnum> $enumClass */
+            $enumClass = $prop->enumClass;
+
+            return $enumClass::tryFrom($textContent);
+        }
+
         if ($targetType === \DateTimeImmutable::class || $targetType === 'DateTimeImmutable') {
             return $this->parseDateTime($this->getDirectTextContent($child), $prop);
         }

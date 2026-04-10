@@ -93,6 +93,17 @@ final class MetadataFactory
         $isNullable = $type instanceof ReflectionNamedType && $type->allowsNull();
         $isArray = $phpType === 'array';
 
+        $isEnum = false;
+        $enumClass = null;
+
+        if (!$isArray && $phpType !== 'mixed' && enum_exists($phpType)) {
+            $enumRef = new \ReflectionEnum($phpType);
+            if ($enumRef->isBacked()) {
+                $isEnum = true;
+                $enumClass = $phpType;
+            }
+        }
+
         $innerType = null;
 
         if ($isArray) {
@@ -113,6 +124,8 @@ final class MetadataFactory
             xmlAttribute: $xmlAttribute,
             xmlValue: $xmlValue,
             xmlAny: $xmlAny,
+            isEnum: $isEnum,
+            enumClass: $enumClass,
         );
     }
 

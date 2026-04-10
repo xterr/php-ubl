@@ -3,6 +3,7 @@
 namespace Xterr\UBL\Xml;
 
 use Xterr\UBL\Exception\SerializationException;
+use Xterr\UBL\Xml\Mapping\CodelistMeta;
 use Xterr\UBL\Xml\Mapping\XmlNamespace;
 use Xterr\UBL\Xml\Metadata\MetadataFactory;
 use Xterr\UBL\Xml\Metadata\PropertyMetadata;
@@ -120,7 +121,25 @@ final class XmlSerializer
         $child = $dom->createElementNS($ns, $qualifiedName);
         $parent->appendChild($child);
 
-        if (\is_object($value)) {
+        if ($value instanceof \BackedEnum) {
+            $child->appendChild($dom->createTextNode((string) $value->value));
+
+            $enumRef = new \ReflectionEnum($value);
+            $metaAttrs = $enumRef->getAttributes(CodelistMeta::class);
+            if ($metaAttrs !== []) {
+                $meta = $metaAttrs[0]->newInstance();
+                $child->setAttribute('listID', $meta->listID);
+                if ($meta->listAgencyID !== null) {
+                    $child->setAttribute('listAgencyID', $meta->listAgencyID);
+                }
+                if ($meta->listVersionID !== null) {
+                    $child->setAttribute('listVersionID', $meta->listVersionID);
+                }
+                if ($meta->listName !== null) {
+                    $child->setAttribute('listName', $meta->listName);
+                }
+            }
+        } elseif (\is_object($value)) {
             if ($value instanceof \DateTimeImmutable) {
                 $format = $prop->xmlElement->format ?? 'Y-m-d';
                 $child->appendChild($dom->createTextNode($value->format($format)));
@@ -202,7 +221,7 @@ final class XmlSerializer
                         $this->collectNamespaces($item, $namespaces);
                     }
                 }
-            } elseif (\is_object($value) && !$value instanceof \DateTimeImmutable) {
+            } elseif (\is_object($value) && !$value instanceof \DateTimeImmutable && !$value instanceof \BackedEnum) {
                 $this->collectNamespaces($value, $namespaces);
             }
         }

@@ -19,6 +19,8 @@ final readonly class PropertyMetadata
         public ?XmlAttribute $xmlAttribute,
         public ?XmlValue $xmlValue,
         public ?XmlAny $xmlAny,
+        public bool $isEnum = false,
+        public ?string $enumClass = null,
     ) {}
 
     public function isElement(): bool
