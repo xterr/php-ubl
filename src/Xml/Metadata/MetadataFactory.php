@@ -89,18 +89,43 @@ final class MetadataFactory
         }
 
         $type = $property->getType();
-        $phpType = $type instanceof ReflectionNamedType ? $type->getName() : 'mixed';
-        $isNullable = $type instanceof ReflectionNamedType && $type->allowsNull();
+
+        if ($type instanceof ReflectionNamedType) {
+            $phpType = $type->getName();
+        } elseif ($type instanceof \ReflectionUnionType) {
+            $phpType = 'mixed';
+        } else {
+            $phpType = 'mixed';
+        }
+        $isNullable = $type !== null && $type->allowsNull();
         $isArray = $phpType === 'array';
 
         $isEnum = false;
-        $enumClass = null;
+        $enumClasses = [];
 
-        if (!$isArray && $phpType !== 'mixed' && enum_exists($phpType)) {
-            $enumRef = new \ReflectionEnum($phpType);
-            if ($enumRef->isBacked()) {
+        if ($type instanceof ReflectionNamedType) {
+            $typeName = $type->getName();
+            if (!$isArray && $typeName !== 'mixed' && enum_exists($typeName)) {
+                $enumRef = new \ReflectionEnum($typeName);
+                if ($enumRef->isBacked()) {
+                    $isEnum = true;
+                    $enumClasses[] = $typeName;
+                }
+            }
+        } elseif ($type instanceof \ReflectionUnionType) {
+            foreach ($type->getTypes() as $unionMember) {
+                if ($unionMember instanceof ReflectionNamedType) {
+                    $memberName = $unionMember->getName();
+                    if (enum_exists($memberName)) {
+                        $enumRef = new \ReflectionEnum($memberName);
+                        if ($enumRef->isBacked()) {
+                            $enumClasses[] = $memberName;
+                        }
+                    }
+                }
+            }
+            if ($enumClasses !== []) {
                 $isEnum = true;
-                $enumClass = $phpType;
             }
         }
 
@@ -125,7 +150,7 @@ final class MetadataFactory
             xmlValue: $xmlValue,
             xmlAny: $xmlAny,
             isEnum: $isEnum,
-            enumClass: $enumClass,
+            enumClasses: $enumClasses,
         );
     }
 

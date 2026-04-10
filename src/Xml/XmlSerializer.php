@@ -21,7 +21,7 @@ final class XmlSerializer
     {
         $meta = $this->metadataFactory->getMetadata($object::class);
 
-        if (!$meta->isRootDocument()) {
+        if ($meta->xmlRoot === null) {
             throw new SerializationException(\sprintf('Class %s is not a document root (missing #[XmlRoot]).', $object::class));
         }
 
@@ -65,6 +65,9 @@ final class XmlSerializer
 
         // 1. Write XML attributes
         foreach ($meta->getAttributeProperties() as $prop) {
+            if ($prop->xmlAttribute === null) {
+                continue;
+            }
             $value = $this->getProperty($object, $prop->name);
             if ($value !== null) {
                 $parent->setAttribute($prop->xmlAttribute->name, (string) $value);
@@ -77,7 +80,7 @@ final class XmlSerializer
             $value = $this->getProperty($object, $valueProp->name);
             if ($value !== null) {
                 if ($value instanceof \DateTimeImmutable) {
-                    $format = $valueProp->xmlValue?->format ?? 'Y-m-d\TH:i:sP';
+                    $format = $valueProp->xmlValue->format ?? 'Y-m-d\TH:i:sP';
                     $value = $value->format($format);
                 }
                 $parent->appendChild($dom->createTextNode((string) $value));
@@ -114,6 +117,10 @@ final class XmlSerializer
 
     private function serializeChildElement(\DOMDocument $dom, \DOMElement $parent, PropertyMetadata $prop, mixed $value): void
     {
+        if ($prop->xmlElement === null) {
+            return;
+        }
+
         $ns = $prop->xmlElement->namespace;
         $prefix = XmlNamespace::prefixFor($ns);
         $qualifiedName = $prefix !== null ? $prefix . ':' . $prop->xmlElement->name : $prop->xmlElement->name;
@@ -205,6 +212,10 @@ final class XmlSerializer
         }
 
         foreach ($meta->getElementProperties() as $prop) {
+            if ($prop->xmlElement === null) {
+                continue;
+            }
+
             $ns = $prop->xmlElement->namespace;
             if (!isset($namespaces[$ns])) {
                 $namespaces[$ns] = XmlNamespace::prefixFor($ns);

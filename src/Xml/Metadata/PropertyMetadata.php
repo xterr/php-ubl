@@ -20,7 +20,8 @@ final readonly class PropertyMetadata
         public ?XmlValue $xmlValue,
         public ?XmlAny $xmlAny,
         public bool $isEnum = false,
-        public ?string $enumClass = null,
+        /** @var list<class-string<\UnitEnum>> */
+        public array $enumClasses = [],
     ) {}
 
     public function isElement(): bool

@@ -38,7 +38,7 @@ final class BackedEnumSupportTest extends TestCase
 
         $this->assertNotNull($typeCodeProp);
         $this->assertTrue($typeCodeProp->isEnum);
-        $this->assertSame(TestCodelist::class, $typeCodeProp->enumClass);
+        $this->assertSame([TestCodelist::class], $typeCodeProp->enumClasses);
     }
 
     public function testMetadataDetectsBareEnumProperty(): void
@@ -56,7 +56,7 @@ final class BackedEnumSupportTest extends TestCase
 
         $this->assertNotNull($bareCodeProp);
         $this->assertTrue($bareCodeProp->isEnum);
-        $this->assertSame(TestCodelistBare::class, $bareCodeProp->enumClass);
+        $this->assertSame([TestCodelistBare::class], $bareCodeProp->enumClasses);
     }
 
     public function testSerializeEnumWithCodelistMeta(): void

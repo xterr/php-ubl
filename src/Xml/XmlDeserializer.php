@@ -3,6 +3,7 @@
 namespace Xterr\UBL\Xml;
 
 use Xterr\UBL\Exception\DeserializationException;
+use Xterr\UBL\Xml\Mapping\CodelistMeta;
 use Xterr\UBL\Xml\Metadata\ClassMetadata;
 use Xterr\UBL\Xml\Metadata\MetadataFactory;
 use Xterr\UBL\Xml\Metadata\PropertyMetadata;
@@ -11,6 +12,8 @@ final class XmlDeserializer
 {
     private MetadataFactory $metadataFactory;
     private int $maxXmlSize;
+    /** @var array<string, string> */
+    private array $listIdToEnumCache = [];
 
     public function __construct(
         ?MetadataFactory $metadataFactory = null,
@@ -76,6 +79,9 @@ final class XmlDeserializer
 
         // 1. Set XML attributes
         foreach ($meta->getAttributeProperties() as $prop) {
+            if ($prop->xmlAttribute === null) {
+                continue;
+            }
             $attrValue = $element->getAttribute($prop->xmlAttribute->name);
             if ($attrValue !== '') {
                 $this->setProperty($object, $prop->name, $attrValue);
@@ -113,7 +119,7 @@ final class XmlDeserializer
                 }
             } else {
                 // Unmapped element — collect for XmlAny
-                $anyFragments[] = $element->ownerDocument->saveXML($child);
+                $anyFragments[] = $element->ownerDocument?->saveXML($child);
             }
         }
 
@@ -137,12 +143,34 @@ final class XmlDeserializer
             return $this->convertValue($this->getDirectTextContent($child), $prop);
         }
 
-        if ($prop->isEnum && $prop->enumClass !== null) {
+        if ($prop->isEnum && $prop->enumClasses !== []) {
             $textContent = $this->getDirectTextContent($child);
-            /** @var class-string<\BackedEnum> $enumClass */
-            $enumClass = $prop->enumClass;
 
-            return $enumClass::tryFrom($textContent);
+            if (\count($prop->enumClasses) === 1) {
+                /** @var class-string<\BackedEnum> $enumClass */
+                $enumClass = $prop->enumClasses[0];
+
+                return $enumClass::tryFrom($textContent);
+            }
+
+            $listID = $child->getAttribute('listID');
+            if ($listID !== '') {
+                /** @var class-string<\BackedEnum>|null $resolved */
+                $resolved = $this->resolveEnumByListID($listID, $prop->enumClasses);
+                if ($resolved !== null) {
+                    return $resolved::tryFrom($textContent);
+                }
+            }
+
+            foreach ($prop->enumClasses as $candidate) {
+                /** @var class-string<\BackedEnum> $candidate */
+                $result = $candidate::tryFrom($textContent);
+                if ($result !== null) {
+                    return $result;
+                }
+            }
+
+            return null;
         }
 
         if ($targetType === \DateTimeImmutable::class || $targetType === 'DateTimeImmutable') {
@@ -171,7 +199,7 @@ final class XmlDeserializer
 
     private function parseDateTime(string $text, PropertyMetadata $prop): \DateTimeImmutable
     {
-        $format = $prop->xmlElement?->format ?? $prop->xmlValue?->format;
+        $format = $prop->xmlElement->format ?? $prop->xmlValue?->format;
 
         if ($format !== null) {
             $dt = \DateTimeImmutable::createFromFormat('!' . $format, $text, new \DateTimeZone('UTC'));
@@ -202,7 +230,7 @@ final class XmlDeserializer
     {
         $text = '';
         foreach ($element->childNodes as $node) {
-            if ($node instanceof \DOMText || $node instanceof \DOMCDATASection) {
+            if ($node instanceof \DOMText) {
                 $text .= $node->nodeValue;
             }
         }
@@ -223,11 +251,37 @@ final class XmlDeserializer
         return $elements;
     }
 
+    /** @param list<class-string<\UnitEnum>> $enumClasses */
+    private function resolveEnumByListID(string $listID, array $enumClasses): ?string
+    {
+        if (isset($this->listIdToEnumCache[$listID])) {
+            return $this->listIdToEnumCache[$listID];
+        }
+
+        foreach ($enumClasses as $enumClass) {
+            $ref = new \ReflectionEnum($enumClass);
+            $attrs = $ref->getAttributes(CodelistMeta::class);
+            if ($attrs !== []) {
+                $meta = $attrs[0]->newInstance();
+                if ($meta->listID === $listID) {
+                    $this->listIdToEnumCache[$listID] = $enumClass;
+
+                    return $enumClass;
+                }
+            }
+        }
+
+        return null;
+    }
+
     /** @return array<string, PropertyMetadata> keyed by "namespace:localName" */
     private function buildMappedElementIndex(ClassMetadata $meta): array
     {
         $index = [];
         foreach ($meta->getElementProperties() as $prop) {
+            if ($prop->xmlElement === null) {
+                continue;
+            }
             $key = $prop->xmlElement->namespace . ':' . $prop->xmlElement->name;
             $index[$key] = $prop;
         }
