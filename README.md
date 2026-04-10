@@ -176,42 +176,6 @@ composer analyze
 
 Tests run on PHP 8.2, 8.3, and 8.4 via GitHub Actions. Tagged releases are automatically notified to Packagist.
 
-## Repository Structure
-
-```
-php-ubl/
-├── src/
-│   ├── Exception/              # Exception hierarchy
-│   │   ├── ExceptionInterface.php
-│   │   ├── DeserializationException.php
-│   │   ├── SerializationException.php
-│   │   ├── GeneratorException.php
-│   │   └── SchemaParseException.php
-│   ├── Validation/             # XSD constraint support
-│   │   └── ChoiceGroupConstraint.php
-│   └── Xml/
-│       ├── Mapping/            # PHP 8 attributes for XML mapping
-│       │   ├── XmlAny.php
-│       │   ├── XmlAttribute.php
-│       │   ├── XmlElement.php
-│       │   ├── XmlNamespace.php
-│       │   ├── XmlRoot.php
-│       │   ├── XmlType.php
-│       │   └── XmlValue.php
-│       ├── Metadata/           # Reflection-based metadata extraction
-│       │   ├── ClassMetadata.php
-│       │   ├── MetadataFactory.php
-│       │   └── PropertyMetadata.php
-│       ├── XmlDeserializer.php
-│       └── XmlSerializer.php
-├── tests/
-│   └── Unit/
-├── composer.json
-├── phpstan.neon.dist
-├── phpunit.xml.dist
-└── LICENSE
-```
-
 ## License
 
-[MIT](LICENSE) - Copyright (c) 2022 Ceana Razvan
+[MIT](LICENSE) - Copyright (c) 2026 Ceana Razvan
